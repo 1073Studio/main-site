@@ -235,58 +235,104 @@
                         ">
                 
     <section class="postShorten-group main-content-wrap">
-    
-    
-    <article class="postShorten postShorten--thumbnailimg-bottom" itemscope itemType="http://schema.org/BlogPosting">
+    <% page.posts.each(function(post) { %>
+    <%
+        var tableOfContents = null;
+        var thumbnailImageUrl = post.thumbnailImageUrl;
+        var postContent = post.content;
+        // Define default position for the thumbnail image
+        var thumbnailImagePosition = theme.thumbnail_image_position;
+        /* Define thumbnail image */
+
+        // Define position of the thumbnail image
+        if (!post.excerpt && !post.link) {
+            thumbnailImagePosition = "bottom";
+        } else if (thumbnailImageUrl !== null) {
+            if (post.thumbnailImagePosition && post.thumbnailImagePosition.length)  {
+                thumbnailImagePosition = post.thumbnailImagePosition;
+            }
+        }
+
+        // Generate and insert table of contents in post content
+        if (!post.excerpt && (/<!--(\s*)[t|T][o|O][c|C](\s*)-->/).test(postContent)) {
+            if (__('post.toc_title')) {
+                tableOfContents = '<h1 id=\"table-of-contents\">' + __('post.toc') + '</h1>';
+            } else {
+                tableOfContents = '<span id="table-of-contents"></span>';
+            }
+            tableOfContents += toc(postContent, {list_number: false})
+            postContent = postContent.replace(/<!--(\s*)[t|T][o|O][c|C](\s*)-->/, tableOfContents)
+        }
+    %>
+    <article class="postShorten postShorten--thumbnailimg-<%= thumbnailImagePosition %>" itemscope itemType="http://schema.org/BlogPosting">
         <div class="postShorten-wrap">
-            
+            <% if (thumbnailImageUrl !== null && thumbnailImagePosition === "top") { %>
+                <a href="<%- url_for(post.path) %>">
+                    <div class="postShorten-thumbnailimg">
+                        <img alt="" itemprop="image" src="<%= thumbnailImageUrl %>"/>
+                    </div>
+                </a>
+                <% thumbnailImageUrl = null; %>
+            <% } %>
             <div class="postShorten-header">
                 <h1 class="postShorten-title" itemprop="headline">
-                    
-                        <a class="link-unstyled" href="/archives/2016-07-28/index/">
-                            1073 Studio 官方主頁
+                    <% if (post.link) { %>
+                        <a class="link-unstyled" href="<%- url_for(post.link) %>">
+                            <%= post.title || '(' + __('post.no_title') + ')' %>
                         </a>
-                    
+                    <% } else { %>
+                        <a class="link-unstyled" href="<%- url_for(post.path) %>">
+                            <%= post.title || '(' + __('post.no_title') + ')' %>
+                        </a>
+                    <% } %>
                 </h1>
-                <div class="postShorten-meta">
-    
-</div>
-
+                <%- partial('post/meta', {post: post, classes: ['postShorten-meta']}) %>
             </div>
-            
-                <div class="postShorten-content" itemprop="articleBody">
-                    <h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><ul>
-<li>[舞台 Stage]<ul>
-<li><a href="stage-abroad">海外 Abroad</a></li>
-<li><a href="stage-hkmotw">港澳台 HK/MO/TW</a></li>
-<li><a href="stage-krjp">日韩 KR/JP</a></li>
-<li><a href="stage-prc">中國大陸 PRC</a></li>
-<li><a href="stage-festival">音樂節 Music Festival</a></li>
-</ul>
-</li>
-<li><a href="1073-event">活動 Event</a></li>
-<li><p><a href="1073-drone">航拍 DRONE</a></p>
-</li>
-<li><p><a href="1073-team">團隊 TEAM</a></p>
-</li>
-<li><a href="1073-contact">聯絡 CONTACT</a></li>
-</ul>
-
-                    
-                        
-                    
+            <% if (post.excerpt || post.link) { %>
+                <div class="postShorten-excerpt" itemprop="articleBody">
+                    <%- post.excerpt %>
+                    <% if (post.link && _('post.go_to_website')) { %>
+                        <a href="<%- url_for(post.link) %>" target="new" class="postShorten-excerpt_link link">
+                            <%= __('post.go_to_website') %>
+                        </a>
+                    <% } else if (__('post.read_more')) { %>
+                        <a href="<%- url_for(post.path) %>" class="postShorten-excerpt_link link">
+                            <%- __('post.read_more') %>
+                        </a>
+                        <% if (post.readingtime) { %>
+                            <span class="postShorten-readingtime">
+                                <%= ' - ' + post.readingtime + ' min read' %>
+                            </span>
+                        <% } %>
+                    <% } %>
                 </div>
-            
+            <% } else { %>
+                <div class="postShorten-content" itemprop="articleBody">
+                    <%- postContent %>
+                    <% if (theme.image_gallery) { %>
+                        <%- partial('post/gallery', {photos: post.photos, post: post})%>
+                    <% } %>
+                    <% if (__('post.comment_and_share')) { %>
+                        <p>
+                            <a href="<%- url_for(post.path + '#post-footer') %>" class="postShorten-excerpt_link link">
+                                <%- __('post.comment_and_share') %>
+                            </a>
+                        </p>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
-        
+        <% if (thumbnailImageUrl !== null && thumbnailImagePosition !== "top") { %>
+            <a href="<%- url_for(post.path) %>">
+                <div class="postShorten-thumbnailimg">
+                    <img alt="" itemprop="image" src="<%= thumbnailImageUrl %>"/>
+                </div>
+            </a>
+            <% thumbnailImageUrl = null; %>
+        <% } %>
     </article>
-    
-    <div class="pagination-bar">
-    <ul class="pagination">
-
-    </ul>
-</div>
-
+    <% }) %>
+    <%- partial('pagination', {type: 'page'}) %>
 </section>
 
 
